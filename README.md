@@ -4,7 +4,6 @@
 ![Terraform](https://img.shields.io/badge/IaC-Terraform-623CE4?style=for-the-badge&logo=terraform)
 ![Kubernetes](https://img.shields.io/badge/Platform-Kubernetes-326CE5?style=for-the-badge&logo=kubernetes)
 ![Multi-Tenant](https://img.shields.io/badge/Architecture-Multi--Tenant-success?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)
 
 > **🌟 FLAGSHIP PROJECT** - Production-ready, multi-tenant SaaS infrastructure on AWS EKS. Complete solution with infrastructure orchestration, multi-tenant provisioning, and working examples.
 
@@ -35,7 +34,7 @@ AWS Resources (EKS, VPC, IAM, etc.)
 
 - AWS CLI (configured with credentials)
 - Terraform >= 1.0
-- kubectl >= 1.28
+- kubectl >= 1.32
 - Git
 
 ### Deployment
