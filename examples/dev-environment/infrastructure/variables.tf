@@ -205,3 +205,14 @@ variable "auto_include_executor" {
   default     = true
 }
 
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+
+variable "db_password" {
+  description = "Password for RDS PostgreSQL database"
+  type        = string
+  sensitive   = true
+  default     = "changeme"  # Change this in infrastructure.tfvars
+}
+

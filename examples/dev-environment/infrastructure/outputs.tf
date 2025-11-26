@@ -131,3 +131,24 @@ output "ecr_registry_id" {
   value       = module.infrastructure.ecr_registry_id
 }
 
+# RDS Outputs
+output "rds_endpoint" {
+  description = "RDS PostgreSQL endpoint"
+  value       = try(aws_db_instance.postgres.endpoint, null)
+}
+
+output "rds_address" {
+  description = "RDS PostgreSQL address (hostname only)"
+  value       = try(aws_db_instance.postgres.address, null)
+}
+
+output "rds_port" {
+  description = "RDS PostgreSQL port"
+  value       = try(aws_db_instance.postgres.port, null)
+}
+
+output "rds_database_name" {
+  description = "RDS PostgreSQL database name"
+  value       = try(aws_db_instance.postgres.db_name, null)
+}
+
