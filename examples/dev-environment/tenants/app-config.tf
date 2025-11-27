@@ -14,6 +14,25 @@ locals {
   rds_db_name = try(data.terraform_remote_state.infrastructure.outputs.rds_database_name, "taskdb")
 }
 
+data "aws_eks_cluster" "current" {
+  name = data.terraform_remote_state.infrastructure.outputs.cluster_name
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.current.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.current.certificate_authority[0].data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", data.aws_eks_cluster.current.name, "--region", var.aws_region]
+  }
+}
+
 resource "kubernetes_config_map" "backend_config" {
   for_each = { for tenant in var.tenants : tenant.namespace => tenant }
 

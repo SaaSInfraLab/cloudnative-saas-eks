@@ -86,7 +86,6 @@ output "rds_secret_name" {
   description = "The name of the secret in AWS Secrets Manager"
   value       = module.rds.rds_secret_name
 }
-}
 
 output "cluster_iam_role_arn" {
   description = "IAM role ARN of the EKS cluster"
@@ -160,20 +159,20 @@ output "ecr_registry_id" {
 
 output "rds_endpoint" {
   description = "RDS PostgreSQL endpoint"
-  value       = try(aws_db_instance.postgres.endpoint, null)
+  value       = module.rds.db_instance_endpoint
 }
 
 output "rds_address" {
   description = "RDS PostgreSQL address (hostname only)"
-  value       = try(aws_db_instance.postgres.address, null)
+  value       = module.rds.db_instance_address
 }
 
 output "rds_port" {
   description = "RDS PostgreSQL port"
-  value       = try(aws_db_instance.postgres.port, null)
+  value       = module.rds.db_instance_port
 }
 
 output "rds_database_name" {
   description = "RDS PostgreSQL database name"
-  value       = try(aws_db_instance.postgres.db_name, null)
+  value       = module.rds.db_instance_name
 }

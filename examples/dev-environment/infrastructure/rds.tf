@@ -37,9 +37,6 @@ module "rds" {
   # Enable deletion protection in production
   deletion_protection = false
   
-  # Enable minor version upgrades automatically
-  auto_minor_version_upgrade = true
-  
   # Database parameters
   db_parameters = [
     {
