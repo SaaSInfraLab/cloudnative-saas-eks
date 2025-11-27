@@ -1,10 +1,3 @@
-# =============================================================================
-# OUTPUTS
-# =============================================================================
-# Forward outputs from the Terraform-modules infrastructure module
-# =============================================================================
-
-# VPC Outputs
 output "vpc_id" {
   description = "ID of the VPC"
   value       = module.infrastructure.vpc_id
@@ -20,7 +13,6 @@ output "public_subnet_ids" {
   value       = module.infrastructure.public_subnet_ids
 }
 
-# EKS Cluster Outputs
 output "cluster_name" {
   description = "Name of the EKS cluster"
   value       = module.infrastructure.cluster_name
@@ -58,7 +50,34 @@ output "nodes_security_group_id" {
   value       = module.infrastructure.nodes_security_group_id
 }
 
-# IAM Roles
+# RDS Outputs
+output "rds_instance_id" {
+  description = "The RDS instance ID"
+  value       = module.rds.db_instance_id
+}
+
+output "rds_instance_endpoint" {
+  description = "The connection endpoint for the RDS instance"
+  value       = module.rds.db_instance_endpoint
+}
+
+output "rds_instance_username" {
+  description = "The master username for the database"
+  value       = module.rds.db_instance_username
+  sensitive   = true
+}
+
+output "rds_instance_name" {
+  description = "The database name"
+  value       = module.rds.db_instance_name
+}
+
+output "rds_security_group_id" {
+  description = "The security group ID of the RDS instance"
+  value       = module.rds.security_group_id
+}
+}
+
 output "cluster_iam_role_arn" {
   description = "IAM role ARN of the EKS cluster"
   value       = module.infrastructure.cluster_iam_role_arn
@@ -84,7 +103,6 @@ output "eks_viewer_role_arn" {
   value       = module.infrastructure.eks_viewer_role_arn
 }
 
-# Additional Outputs
 output "aws_region" {
   description = "AWS region where infrastructure is deployed"
   value       = module.infrastructure.aws_region
@@ -105,7 +123,6 @@ output "cluster_info" {
   }
 }
 
-# ECR Repository Outputs
 output "ecr_backend_repository_url" {
   description = "URL of the backend ECR repository"
   value       = module.infrastructure.ecr_backend_repository_url
@@ -131,7 +148,6 @@ output "ecr_registry_id" {
   value       = module.infrastructure.ecr_registry_id
 }
 
-# RDS Outputs
 output "rds_endpoint" {
   description = "RDS PostgreSQL endpoint"
   value       = try(aws_db_instance.postgres.endpoint, null)
@@ -151,4 +167,3 @@ output "rds_database_name" {
   description = "RDS PostgreSQL database name"
   value       = try(aws_db_instance.postgres.db_name, null)
 }
-

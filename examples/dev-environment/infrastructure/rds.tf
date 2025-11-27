@@ -1,92 +1,62 @@
-# =============================================================================
-# RDS POSTGRESQL INSTANCE
-# =============================================================================
-# Managed PostgreSQL database for multi-tenant SaaS application
-# Using RDS instead of in-cluster PostgreSQL to free up cluster resources
-# =============================================================================
+module "rds" {
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/rds?ref=main"
 
-# DB Subnet Group (for RDS in private subnets)
-resource "aws_db_subnet_group" "main" {
-  name       = "${local.cluster_name}-db-subnet-group"
-  subnet_ids = module.infrastructure.private_subnet_ids
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${local.cluster_name}-db-subnet-group"
-    }
-  )
-}
-
-# Security group for RDS
-resource "aws_security_group" "rds" {
-  name        = "${local.cluster_name}-rds-sg"
-  description = "Security group for RDS PostgreSQL"
-  vpc_id      = module.infrastructure.vpc_id
+  name_prefix = local.cluster_name
+  identifier  = "${local.cluster_name}-postgres"
   
-  tags = merge(
-    var.tags,
-    {
-      Name = "${local.cluster_name}-rds-sg"
-    }
-  )
-
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [module.infrastructure.nodes_security_group_id]
-    description     = "Allow PostgreSQL access from EKS nodes"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-}
-
-# RDS PostgreSQL Instance
-resource "aws_db_instance" "postgres" {
-  identifier     = "${local.cluster_name}-postgres"
   engine         = "postgres"
-  engine_version = "15.4"
-  instance_class = "db.t3.micro"  # Free tier eligible (750 hours/month)
+  engine_version = "15.7"
+  instance_class = "db.t4g.micro"  # Using ARM-based instance for free tier
   
-  allocated_storage     = 20
-  max_allocated_storage = 100  # Auto-scaling
-  storage_type          = "gp3"
-  storage_encrypted     = true
+  allocated_storage     = 20  # Free tier allows up to 20GB
+  max_allocated_storage = 20  # Fixed size to prevent scaling
+  storage_type          = "gp2"
+  storage_encrypted     = false
   
   db_name  = "taskdb"
   username = "taskuser"
-  password = var.db_password  # Set in infrastructure.tfvars
+  password = var.db_password
   
-  # Network configuration
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  vpc_security_group_ids = [aws_security_group.rds.id]
-  publicly_accessible    = false  # Private subnet only
+  vpc_id      = module.infrastructure.vpc_id
+  subnet_ids  = module.infrastructure.private_subnet_ids
   
-  # Backup and maintenance
-  backup_retention_period = 7
+  allowed_security_group_ids = [module.infrastructure.nodes_security_group_id]
+  publicly_accessible       = false
+  
+  # Minimal backup settings
+  backup_retention_period = 1  # Keep only 1 day of backups
   backup_window          = "03:00-04:00"
   maintenance_window     = "mon:04:00-mon:05:00"
-  skip_final_snapshot    = true  # For dev environment
+  skip_final_snapshot    = true
   
-  # Performance
-  performance_insights_enabled = false  # Disable for cost savings
-  monitoring_interval         = 0     # Disable enhanced monitoring for cost
+  # Disable costly features
+  performance_insights_enabled = false
+  monitoring_interval         = 0
+  multi_az                    = false
   
-  # Multi-AZ (disabled for cost, enable for production)
-  multi_az = false
+  # Enable deletion protection in production
+  deletion_protection = false
+  
+  # Enable minor version upgrades automatically
+  auto_minor_version_upgrade = true
+  
+  # Database parameters
+  db_parameters = [
+    {
+      name  = "log_statement"
+      value = "none"
+    },
+    {
+      name  = "log_min_duration_statement"
+      value = "1000"
+    }
+  ]
   
   tags = merge(
     var.tags,
     {
-      Name = "${local.cluster_name}-postgres"
+      Environment = var.environment
+      ManagedBy   = "terraform"
     }
   )
 }
-

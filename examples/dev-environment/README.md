@@ -1,6 +1,6 @@
 # Multi-Tenant SaaS on EKS - Dev Environment
 
-Simple deployment of a multi-tenant SaaS platform on AWS EKS with 2 namespaces (platform + analytics).
+Deploy a multi-tenant SaaS platform on AWS EKS with 2 namespaces (platform + analytics).
 
 ## Quick Start
 
@@ -14,7 +14,7 @@ terraform apply -var-file="../infrastructure.tfvars"
 
 **Duration**: 15-20 minutes
 
-### 2. Deploy Tenants (2 namespaces)
+### 2. Deploy Tenants
 
 ```bash
 cd ../tenants
@@ -23,6 +23,11 @@ terraform apply -var-file="../tenants.tfvars"
 ```
 
 **Duration**: 2-5 minutes
+
+This automatically creates:
+- `platform` and `analytics` namespaces
+- `backend-config` ConfigMap (with RDS endpoint from infrastructure)
+- `postgresql-secret` and `backend-secret` Secrets
 
 ### 3. Update Kubeconfig
 
@@ -34,23 +39,32 @@ kubectl get nodes
 ### 4. Deploy Applications
 
 ```bash
-# Platform namespace
-kubectl apply -k ../../sample-saas-app/k8s/namespace-platform
-
-# Analytics namespace
-kubectl apply -k ../../sample-saas-app/k8s/namespace-analytics
+kubectl apply -k ../../../Sample-saas-app/k8s/namespace-platform
+kubectl apply -k ../../../Sample-saas-app/k8s/namespace-analytics
 ```
 
 ## Configuration
 
 - **Infrastructure**: `infrastructure.tfvars` - Cluster, nodes, RDS settings
-- **Tenants**: `tenants.tfvars` - Namespace configuration (2 tenants)
+- **Tenants**: `tenants.tfvars` - Namespaces and database credentials
+
+**Important**: `db_password` in `tenants.tfvars` must match `db_password` in `infrastructure.tfvars`.
+
+## Multi-Tenant Setup
+
+- **platform**: Main tenant namespace
+- **analytics**: Second tenant namespace
+
+Both namespaces share the same RDS PostgreSQL database but are isolated with:
+- Network policies
+- Resource quotas
+- RBAC
 
 ## Cost
 
-- **3 × t3.micro nodes**: ~$22.50/month (24/7) or scale down to 1 node (~$7.50/month)
-- **RDS t3.micro**: ~$15/month (optional, recommended)
-- **Total**: ~$37.50/month (with RDS) or ~$22.50/month (without RDS)
+- **3 × t3.micro EKS nodes**: ~$22.50/month (or ~$7.50/month with 1 node)
+- **RDS db.t3.micro**: ~$15/month
+- **Total**: ~$37.50/month (24/7) or within free tier if used part-time
 
 ## Cleanup
 

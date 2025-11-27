@@ -1,10 +1,3 @@
-# =============================================================================
-# VARIABLE DECLARATIONS
-# =============================================================================
-# These variables match the structure in ../infrastructure.tfvars
-# =============================================================================
-
-# Core Configuration
 variable "project_name" {
   description = "Name of the project - used for resource naming"
   type        = string
@@ -43,7 +36,6 @@ variable "tags" {
   }
 }
 
-# VPC Configuration
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
@@ -56,7 +48,6 @@ variable "availability_zones" {
   default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
 }
 
-# EKS Cluster Configuration
 variable "cluster_version" {
   description = "Kubernetes version for EKS cluster"
   type        = string
@@ -75,7 +66,6 @@ variable "cluster_endpoint_public_access" {
   default     = true
 }
 
-# Node Group Configuration
 variable "node_instance_types" {
   description = "List of EC2 instance types for worker nodes"
   type        = list(string)
@@ -106,7 +96,6 @@ variable "node_disk_size" {
   default     = 20
 }
 
-# Spot Instances (Optional)
 variable "enable_spot_instances" {
   description = "Enable spot instances for cost optimization"
   type        = bool
@@ -137,7 +126,6 @@ variable "spot_max_size" {
   default     = 2
 }
 
-# Monitoring and Logging
 variable "enable_container_insights" {
   description = "Enable CloudWatch Container Insights"
   type        = bool
@@ -156,7 +144,6 @@ variable "log_retention_days" {
   default     = 7
 }
 
-# EKS Cluster Access Management
 variable "create_eks_access_roles" {
   description = "Whether to create IAM roles for EKS cluster access"
   type        = bool
@@ -205,14 +192,9 @@ variable "auto_include_executor" {
   default     = true
 }
 
-# =============================================================================
-# DATABASE CONFIGURATION
-# =============================================================================
-
 variable "db_password" {
   description = "Password for RDS PostgreSQL database"
   type        = string
   sensitive   = true
-  default     = "changeme"  # Change this in infrastructure.tfvars
+  default     = "changeme"
 }
-

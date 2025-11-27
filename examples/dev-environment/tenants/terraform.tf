@@ -1,7 +1,3 @@
-# =============================================================================
-# TERRAFORM AND PROVIDER CONFIGURATION
-# =============================================================================
-
 terraform {
   required_version = ">= 1.0"
   
@@ -15,8 +11,4 @@ terraform {
       version = "~> 2.23"
     }
   }
-  
-  # NO backend block - use backend-{env}.tfbackend files instead
-  # This prevents conflicts with child modules from GitHub
 }
-

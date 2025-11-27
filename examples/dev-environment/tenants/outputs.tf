@@ -1,9 +1,3 @@
-# =============================================================================
-# OUTPUTS
-# =============================================================================
-# Forward outputs from the Terraform-modules tenants module
-# =============================================================================
-
 output "tenant_namespaces" {
   description = "List of created tenant namespaces"
   value       = module.tenants.tenant_namespaces
@@ -45,3 +39,27 @@ output "tenant_access_commands" {
   value       = module.tenants.tenant_access_commands
 }
 
+output "configmaps_created" {
+  description = "ConfigMaps created for each tenant namespace with RDS configuration"
+  value = {
+    for namespace, cm in kubernetes_config_map.backend_config : namespace => {
+      name      = cm.metadata[0].name
+      namespace = cm.metadata[0].namespace
+      db_host   = cm.data.db-host
+      db_port   = cm.data.db-port
+      db_name   = cm.data.db-name
+    }
+  }
+}
+
+output "secrets_created" {
+  description = "Secrets created for each tenant namespace"
+  value = {
+    for namespace in keys(kubernetes_secret.postgresql_secret) : namespace => {
+      postgresql_secret = kubernetes_secret.postgresql_secret[namespace].metadata[0].name
+      backend_secret    = kubernetes_secret.backend_secret[namespace].metadata[0].name
+      namespace         = namespace
+    }
+  }
+  sensitive = true
+}
