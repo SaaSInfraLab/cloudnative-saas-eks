@@ -76,6 +76,16 @@ output "rds_security_group_id" {
   description = "The security group ID of the RDS instance"
   value       = module.rds.security_group_id
 }
+
+output "rds_secret_arn" {
+  description = "The ARN of the secret in AWS Secrets Manager"
+  value       = module.rds.rds_secret_arn
+}
+
+output "rds_secret_name" {
+  description = "The name of the secret in AWS Secrets Manager"
+  value       = module.rds.rds_secret_name
+}
 }
 
 output "cluster_iam_role_arn" {
