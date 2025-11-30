@@ -12,6 +12,24 @@ locals {
   rds_address = try(data.terraform_remote_state.infrastructure.outputs.rds_address, "")
   rds_port    = try(data.terraform_remote_state.infrastructure.outputs.rds_port, "5432")
   rds_db_name = try(data.terraform_remote_state.infrastructure.outputs.rds_database_name, "taskdb")
+  rds_secret_arn = try(data.terraform_remote_state.infrastructure.outputs.rds_secret_arn, "")
+}
+
+# Read RDS credentials from AWS Secrets Manager for consistency
+data "aws_secretsmanager_secret" "rds_credentials" {
+  count = local.rds_secret_arn != "" ? 1 : 0
+  arn   = local.rds_secret_arn
+}
+
+data "aws_secretsmanager_secret_version" "rds_credentials" {
+  count     = local.rds_secret_arn != "" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.rds_credentials[0].id
+}
+
+locals {
+  # Use password from Secrets Manager if available, otherwise fall back to variable
+  db_password_from_secret = try(jsondecode(data.aws_secretsmanager_secret_version.rds_credentials[0].secret_string).password, var.db_password)
+  db_user_from_secret     = try(jsondecode(data.aws_secretsmanager_secret_version.rds_credentials[0].secret_string).username, var.db_user)
 }
 
 data "aws_eks_cluster" "current" {
@@ -75,8 +93,8 @@ resource "kubernetes_secret" "postgresql_secret" {
   type = "Opaque"
 
   data = {
-    db-user     = base64encode(var.db_user)
-    db-password = base64encode(var.db_password)
+    db-user     = base64encode(local.db_user_from_secret)
+    db-password = base64encode(local.db_password_from_secret)
   }
 
   depends_on = [module.tenants]

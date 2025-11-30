@@ -194,6 +194,90 @@ Services are not reachable
    - For testing, disable network policies per tenant
    - Set `enable_network_policy = false` in tenant config
 
+### Database Connectivity Issues
+
+#### Issue: Backend Pods Cannot Connect to RDS
+
+**Symptoms:**
+```
+Error: no pg_hba.conf entry for host "...", user "...", database "...", no encryption
+Error: Connection terminated due to connection timeout
+Readiness probe failed: HTTP probe failed with statuscode: 503
+```
+
+**Solutions:**
+1. **Enable SSL in Database Connection**
+   - The backend application now includes SSL support for RDS connections
+   - Ensure `ssl: { rejectUnauthorized: false }` is configured in database connection
+   - This is automatically handled in the latest backend code
+
+2. **Verify RDS Security Group Rules**
+   - RDS security group must allow traffic from both:
+     - EKS nodes security group
+     - EKS cluster security group (for pod networking)
+   - Port 5432 (PostgreSQL) must be open
+   ```bash
+   # Check security group rules
+   aws ec2 describe-security-groups --group-ids <rds-sg-id>
+   ```
+
+3. **Check Network Policies (if enabled)**
+   - Network policies may block egress to RDS if not configured correctly
+   - Ensure network policy allows egress on port 5432 (PostgreSQL)
+   - Check if network policies are enabled:
+     ```bash
+     kubectl get networkpolicies -n <namespace>
+     ```
+   - If network policies are blocking, the multi-tenancy module now includes egress rules for:
+     - Port 5432 (PostgreSQL/RDS)
+     - Port 443 (HTTPS for AWS API calls)
+   - Re-apply tenants Terraform to update network policies:
+     ```bash
+     cd tenants
+     terraform apply
+     ```
+
+4. **Check Database Connection Timeout**
+   - Connection timeout is set to 15 seconds in backend (`connectionTimeoutMillis: 15000`)
+   - Health check wrapper timeout: 18 seconds (prevents readiness check from hanging)
+   - Readiness probe timeout: 20 seconds (matches health check wrapper)
+   - Initial delay: 20 seconds (allows pod startup time)
+   - If timeouts persist, check network latency and RDS performance
+
+5. **Verify Secrets**
+   ```bash
+   # Platform namespace (uses AWS Secrets Manager)
+   kubectl get secret db-credentials -n platform
+   
+   # Analytics namespace (uses Terraform-created secret)
+   kubectl get secret postgresql-secret -n analytics
+   ```
+
+#### Issue: Analytics Namespace Backend Fails with Authentication Error
+
+**Symptoms:**
+```
+Error: password authentication failed for user "dGFza3VzZXI="
+```
+
+**Solutions:**
+1. **Check Secret Encoding**
+   - Ensure `postgresql-secret` in analytics namespace has correct, single-encoded values
+   - Terraform automatically handles base64 encoding correctly
+   - If manually created, ensure values are not double-encoded
+
+2. **Verify Secret Values**
+   ```bash
+   kubectl get secret postgresql-secret -n analytics -o jsonpath='{.data.db-user}' | base64 -d
+   kubectl get secret postgresql-secret -n analytics -o jsonpath='{.data.db-password}' | base64 -d
+   ```
+
+3. **Recreate Secret from Terraform**
+   ```bash
+   cd cloudnative-saas-eks/examples/dev-environment/tenants
+   terraform apply -var-file="../tenants.tfvars"
+   ```
+
 ### Connectivity Issues
 
 #### Issue: Cannot Connect to Cluster
@@ -271,6 +355,51 @@ Error: ErrImagePull
    # On a node
    docker pull <image-name>
    ```
+
+#### Issue: Backend Pods Not Becoming Ready
+
+**Symptoms:**
+```
+Readiness probe failed: HTTP probe failed with statuscode: 503
+Readiness probe failed: context deadline exceeded
+```
+
+**Solutions:**
+1. **Check Health Check Endpoints**
+   - Liveness probe: `/health/live` (should always return 200)
+   - Readiness probe: `/health/ready` (checks database connection)
+   - Ensure backend code has these endpoints implemented
+
+2. **Verify Database Connection**
+   - Check database credentials in secrets
+   - Verify RDS security group allows traffic from EKS
+   - Test database connectivity from a pod:
+     ```bash
+     kubectl run -it --rm debug --image=postgres:15 --restart=Never -- \
+       psql -h <rds-endpoint> -U <username> -d <database>
+     ```
+
+3. **Check Pod Logs**
+   ```bash
+   kubectl logs <pod-name> -n <namespace> --tail=50
+   ```
+
+4. **Review Resource Limits**
+   - Ensure sufficient memory (minimum 512Mi request, 2Gi limit for platform)
+   - Check Node.js heap size: `NODE_OPTIONS=--max-old-space-size=1200`
+   - Verify CPU limits are not too restrictive
+
+5. **Check Timeout Configurations**
+   - Database connection timeout: 15 seconds (configured in `database.js`)
+   - Health check wrapper: 18 seconds (prevents hanging)
+   - Readiness probe timeout: 20 seconds (matches health check)
+   - If deployments timeout, check CI/CD pipeline rollout timeout (10 minutes)
+
+6. **CI/CD Pipeline Timeouts**
+   - Backend rollout timeout: 10 minutes
+   - Frontend rollout timeout: 10 minutes
+   - Deploy step timeout: 20 minutes
+   - If pipeline times out, check pod logs and database connectivity
 
 ### Performance Issues
 

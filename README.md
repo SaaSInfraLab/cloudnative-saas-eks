@@ -173,6 +173,8 @@ Edit `examples/dev-environment/tenants.tfvars` to customize:
 - Network policy settings
 - Number of tenants
 
+**Database Credentials**: The tenants Terraform automatically reads database credentials from AWS Secrets Manager (created during infrastructure deployment). The `db_password` in `tenants.tfvars` is only used as a fallback, ensuring consistency between RDS and Kubernetes secrets.
+
 ---
 
 ## 📊 Monitoring & Observability
@@ -225,9 +227,11 @@ kubectl describe quota -n <tenant-namespace>
 
 | Environment | Instance Type | Node Count | Estimated Cost |
 |-------------|---------------|------------|----------------|
-| **Development** | t3.micro | 2 | ~$75-100 (free tier) |
+| **Development** | m7i-flex.large | 2 | ~$15-20/month (free tier eligible) |
 | **Staging** | t3.medium | 3 | ~$200-300 |
 | **Production** | t3.large | 5+ | ~$500-800 |
+
+**Note**: Development environment uses `m7i-flex.large` nodes which are free tier eligible and provide better pod capacity (~29 pods/node) compared to t3.micro (4 pods/node).
 
 ## 🤝 Contributing
 

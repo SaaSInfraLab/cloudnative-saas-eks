@@ -121,8 +121,19 @@ Deploys core AWS infrastructure:
 - Network policies
 - RBAC configurations
 - Service accounts with IRSA
+- Kubernetes secrets (database credentials from AWS Secrets Manager)
+- ConfigMaps (application configuration)
 
 **Module Source**: `github.com/SaaSInfraLab/Terraform-modules//tenants?ref=main`
+
+### Phase 3: Application Deployment (CI/CD)
+- Container image builds (ECR)
+- Automated deployment via GitHub Actions
+- Dynamic secret injection (CSI Secrets Store Driver)
+- Health check verification
+- Rollout status monitoring
+
+**Repository**: `Sample-saas-app` with GitHub Actions workflows
 
 ## Design Decisions
 
@@ -146,6 +157,34 @@ Deploys core AWS infrastructure:
 
 ### Network Policies
 **Rationale**: Strong tenant isolation, defense in depth, prevents cross-tenant traffic.
+
+### RDS Security Group Configuration
+**Rationale**: EKS pods use the cluster security group for networking, not just the nodes security group. Both security groups must be allowed in RDS security group rules to ensure proper connectivity.
+
+### Secrets Management from AWS Secrets Manager
+**Rationale**: 
+- Single source of truth for database credentials
+- Automatic synchronization between RDS and Kubernetes
+- Eliminates manual secret updates
+- Ensures consistency across deployments
+- Platform namespace uses CSI driver for dynamic injection
+- Analytics namespace uses Terraform-managed secrets (also read from Secrets Manager)
+
+### SSL/TLS for Database Connections
+**Rationale**: 
+- RDS requires SSL connections for security
+- Prevents `pg_hba.conf` authentication errors
+- Encrypts data in transit
+- Required by AWS security best practices
+- Configured with `ssl: { rejectUnauthorized: false }` in database connection pool
+
+### Timeout Configuration
+**Rationale**:
+- **Database Connection Timeout (15s)**: Allows sufficient time for RDS SSL handshake and connection establishment
+- **Health Check Wrapper (18s)**: Prevents readiness checks from hanging indefinitely, ensures completion before probe timeout
+- **Readiness Probe Timeout (20s)**: Matches health check wrapper, provides buffer for network latency
+- **Rollout Timeout (10m)**: Accounts for pod startup, image pull, database connection, and health check retries
+- These timeouts work together to ensure reliable deployments even with slow database connections
 
 ### Direct AWS Data Source for Cluster Info
 **Rationale**: Prevents stale endpoint issues, resilient to remote state inconsistencies, always current.

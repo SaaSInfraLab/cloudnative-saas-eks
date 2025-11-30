@@ -108,11 +108,12 @@ terraform init -backend-config=backend-dev.tfbackend
 
 # Review plan
 terraform plan -var-file="../tenants.tfvars"
-```
 
 # Deploy
 terraform apply -var-file="../tenants.tfvars"
 ```
+
+**Note**: The tenants Terraform automatically reads database credentials from AWS Secrets Manager (created during infrastructure deployment), ensuring consistency between RDS and Kubernetes secrets.
 
 **Expected Duration**: 2-5 minutes
 

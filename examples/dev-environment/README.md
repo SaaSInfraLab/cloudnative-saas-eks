@@ -27,7 +27,8 @@ terraform apply -var-file="../tenants.tfvars"
 This automatically creates:
 - `platform` and `analytics` namespaces
 - `backend-config` ConfigMap (with RDS endpoint from infrastructure)
-- `postgresql-secret` and `backend-secret` Secrets
+- `postgresql-secret` and `backend-secret` Secrets (credentials read from AWS Secrets Manager)
+- Resource quotas, network policies, and RBAC for each tenant
 
 ### 3. Update Kubeconfig
 
@@ -48,7 +49,7 @@ kubectl apply -k ../../../Sample-saas-app/k8s/namespace-analytics
 - **Infrastructure**: `infrastructure.tfvars` - Cluster, nodes, RDS settings
 - **Tenants**: `tenants.tfvars` - Namespaces and database credentials
 
-**Important**: `db_password` in `tenants.tfvars` must match `db_password` in `infrastructure.tfvars`.
+**Important**: Database credentials are automatically read from AWS Secrets Manager. The `db_password` in `tenants.tfvars` is used as a fallback if Secrets Manager is not available. The tenants Terraform configuration automatically retrieves the actual RDS password from AWS Secrets Manager for consistency.
 
 ## Multi-Tenant Setup
 
@@ -62,9 +63,11 @@ Both namespaces share the same RDS PostgreSQL database but are isolated with:
 
 ## Cost
 
-- **3 × t3.micro EKS nodes**: ~$22.50/month (or ~$7.50/month with 1 node)
-- **RDS db.t3.micro**: ~$15/month
-- **Total**: ~$37.50/month (24/7) or within free tier if used part-time
+- **2 × m7i-flex.large EKS nodes**: Free tier eligible (1 vCPU, 8GB RAM each)
+- **RDS db.t4g.micro**: ~$15/month (ARM-based, free tier eligible)
+- **Total**: ~$15-20/month (24/7) or within free tier if used part-time
+
+**Note**: The configuration uses `m7i-flex.large` nodes which are free tier eligible and provide better pod capacity (~29 pods/node) compared to t3.micro (4 pods/node).
 
 ## Cleanup
 
