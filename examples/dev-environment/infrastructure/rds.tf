@@ -1,7 +1,10 @@
 # Data source to get the actual EKS cluster security group
-# This ensures we use the real cluster security group created by AWS, not the one from Terraform state
+# This ensures we use the real cluster security group created by AWS
+# Note: This requires the EKS cluster to exist first
 data "aws_eks_cluster" "main" {
   name = local.cluster_name
+  
+  depends_on = [module.infrastructure]
 }
 
 module "rds" {
@@ -28,13 +31,12 @@ module "rds" {
   subnet_ids  = module.infrastructure.private_subnet_ids
   
   # Allow access from both EKS nodes and cluster security groups
-  # Note: EKS nodes use the cluster security group for pod networking
-  # We use data.aws_eks_cluster.main.vpc_config[0].cluster_security_group_id to get the actual
-  # cluster security group created by AWS, which may differ from Terraform state
+  # The module output and data source should have the same security group ID,
+  # but we include both to ensure compatibility
   allowed_security_group_ids = [
     module.infrastructure.nodes_security_group_id,
     module.infrastructure.cluster_security_group_id,
-    data.aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+    try(data.aws_eks_cluster.main.vpc_config[0].cluster_security_group_id, module.infrastructure.cluster_security_group_id)
   ]
   publicly_accessible       = false
   

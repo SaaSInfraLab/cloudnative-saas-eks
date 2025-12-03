@@ -88,13 +88,28 @@ resource "kubernetes_secret" "postgresql_secret" {
       tenant  = each.value.name
       managed = "terraform"
     }
+    annotations = {
+      # Force secret update when values change by including a hash of the actual values
+      # This ensures Terraform detects changes even if the secret exists with wrong encoding
+      "secret-version" = md5("${local.db_user_from_secret}:${local.db_password_from_secret}")
+    }
   }
 
   type = "Opaque"
-
+  
+  # The data field expects base64-encoded strings
+  # We encode the plain text values once here
+  # Kubernetes will decode them once when pods read the secret
+  # This results in single encoding (correct behavior)
   data = {
     db-user     = base64encode(local.db_user_from_secret)
     db-password = base64encode(local.db_password_from_secret)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+    # The annotation hash ensures Terraform detects when secret values change
+    # This allows automatic updates even if secrets were manually modified
   }
 
   depends_on = [module.tenants]
@@ -115,6 +130,9 @@ resource "kubernetes_secret" "backend_secret" {
 
   type = "Opaque"
 
+  # The data field expects base64-encoded strings
+  # We encode the plain text values once here
+  # Kubernetes will decode them once when pods read the secret
   data = {
     jwt-secret = base64encode(var.jwt_secret)
   }
