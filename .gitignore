@@ -6,6 +6,8 @@
 .terraform.lock.hcl
 *.tfvars
 !*.tfvars.example
+# Allow config tfvars files (they are the source of truth)
+!examples/dev-environment/config/*.tfvars
 crash.log
 override.tf
 override.tf.json
