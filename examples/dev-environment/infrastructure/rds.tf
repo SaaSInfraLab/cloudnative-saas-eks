@@ -1,5 +1,5 @@
 module "rds" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/rds?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/rds?ref=testing"
 
   name_prefix = local.cluster_name
   identifier  = "${local.cluster_name}-postgres"

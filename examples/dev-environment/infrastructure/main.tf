@@ -35,7 +35,7 @@ locals {
 # =============================================================================
 
 module "iam" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/iam?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/iam?ref=testing"
   
   create_eks_cluster_role      = true
   create_eks_node_role         = true
@@ -59,7 +59,7 @@ module "iam" {
 # =============================================================================
 
 module "vpc" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/vpc?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/vpc?ref=testing"
   
   name_prefix            = "${local.cluster_name}-vpc"
   vpc_cidr               = var.vpc_cidr
@@ -77,7 +77,7 @@ module "vpc" {
 # =============================================================================
 
 module "eks" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/eks?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/eks?ref=testing"
   
   cluster_name    = local.cluster_name
   cluster_version = var.cluster_version
@@ -132,7 +132,7 @@ module "eks" {
 # =============================================================================
 
 module "monitoring" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/monitoring?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/monitoring?ref=testing"
   
   cluster_name = local.cluster_name
   
@@ -151,7 +151,7 @@ module "monitoring" {
 # =============================================================================
 
 module "ecr_backend" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/ecr?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/ecr?ref=testing"
   
   repository_name     = "${var.project_name}-${var.environment}-backend"
   image_tag_mutability = "MUTABLE"
@@ -179,7 +179,7 @@ module "ecr_backend" {
 }
 
 module "ecr_frontend" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/ecr?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/ecr?ref=testing"
   
   repository_name     = "${var.project_name}-${var.environment}-frontend"
   image_tag_mutability = "MUTABLE"

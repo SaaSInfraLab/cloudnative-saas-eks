@@ -30,7 +30,7 @@ locals {
 # =============================================================================
 
 module "multi_tenancy" {
-  source = "github.com/SaaSInfraLab/Terraform-modules//modules/multi-tenancy?ref=main"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/multi-tenancy?ref=testing"
   
   # Tenant configurations - ALL from cloudnative-saas-eks variables
   tenants = var.tenants
