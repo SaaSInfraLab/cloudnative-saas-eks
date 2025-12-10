@@ -23,6 +23,7 @@ on:
 
 env:
   GITOPS_REPO: SaaSInfraLab/Gitops-pipeline
+  GITOPS_TRIGGER_TOKEN: ${{ secrets.GITOPS_TRIGGER_TOKEN }}
 
 jobs:
   validate-and-trigger:
@@ -70,7 +71,19 @@ jobs:
             echo "environment=dev" >> $GITHUB_OUTPUT
           fi
 
+      - name: Check for GitOps Trigger Token
+        if: env.GITOPS_TRIGGER_TOKEN == ''
+        run: |
+          echo "⚠️  WARNING: GITOPS_TRIGGER_TOKEN secret not found!"
+          echo "The workflow will skip triggering Gitops-pipeline."
+          echo "To enable automatic deployment:"
+          echo "1. Go to Settings → Secrets and variables → Actions"
+          echo "2. Add secret: GITOPS_TRIGGER_TOKEN"
+          echo "3. Value: GitHub Personal Access Token with 'repo' scope"
+          exit 0
+
       - name: Trigger GitOps Pipeline
+        if: env.GITOPS_TRIGGER_TOKEN != ''
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.GITOPS_TRIGGER_TOKEN }}
