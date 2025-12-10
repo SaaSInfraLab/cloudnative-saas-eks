@@ -17,6 +17,7 @@ This is the **single source of truth** for all infrastructure configurations. It
 - ✅ **Pure Terraform** - Standard Terraform workflow, no helper scripts required
 - ✅ **Centralized Configuration** - All configs (tfvars, backend) in one place
 - ✅ **GitOps Integration** - Automated deployment via GitHub Actions and ArgoCD
+- ✅ **CI/CD Pipeline** - Automatically triggers infrastructure deployment on config changes
 
 ---
 
@@ -278,7 +279,26 @@ kubectl get quota -n analytics
 
 ### Automated Deployment
 
-Changes to configuration files in this repository are automatically deployed via the [Gitops-pipeline](https://github.com/SaaSInfraLab/Gitops-pipeline) repository, which watches for changes and applies them using GitHub Actions.
+Changes to configuration files in this repository automatically trigger deployment via the [Gitops-pipeline](https://github.com/SaaSInfraLab/Gitops-pipeline) repository.
+
+**How it works:**
+1. Edit configuration files in `examples/dev-environment/config/`
+2. Commit and push to `testing` or `main` branch
+3. CI/CD workflow (`.github/workflows/trigger-infrastructure-deployment.yml`) validates Terraform code
+4. Workflow triggers Gitops-pipeline via `repository_dispatch` event
+5. Gitops-pipeline clones this repo and applies changes using Terraform
+
+**Setup Required:**
+- Add `GITOPS_TRIGGER_TOKEN` secret to this repository
+  - Go to **Settings → Secrets and variables → Actions → New repository secret**
+  - Name: `GITOPS_TRIGGER_TOKEN`
+  - Value: GitHub Personal Access Token (PAT) with `repo` scope
+  - Token must have access to `SaaSInfraLab/Gitops-pipeline` repository
+
+**Testing:**
+- Push to `testing` branch to test the workflow
+- Workflow validates Terraform and triggers deployment
+- Check status: **Actions** tab in this repository
 
 ---
 
