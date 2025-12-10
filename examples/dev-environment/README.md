@@ -1,15 +1,48 @@
 # Multi-Tenant SaaS on EKS - Dev Environment
 
-Deploy a multi-tenant SaaS platform on AWS EKS with 2 namespaces (platform + analytics).
+This directory contains the Terraform code for deploying a multi-tenant SaaS platform on AWS EKS.
 
-## Quick Start
+## 🎯 Single Source of Truth
+
+**This repository contains ALL infrastructure configuration - code AND configs.**
+
+- **Terraform code**: `infrastructure/` and `tenants/` directories
+- **Configuration files**: `config/` directory (tfvars and backend configs)
+- **DevOps engineers edit configs here** - this is the single source of truth
+
+## Automated Deployment
+
+Infrastructure is automatically deployed via GitHub Actions in the [Gitops-pipeline](https://github.com/SaaSInfraLab/Gitops-pipeline) repository.
+
+### For Automated Deployments
+
+1. **Configuration**: Edit `config/*.tfvars` files in this repository
+2. **Commit and Push**: Changes trigger deployment via GitOps pipeline
+3. **Deployment**: GitOps pipeline clones this repo and applies changes
+4. **Outputs**: Terraform outputs are automatically captured in GitOps repo's `infra_version.yaml`
+
+The GitOps repository provides:
+- Deployment scripts (`scripts/deploy.sh`, `scripts/destroy.sh`)
+- GitHub Actions workflows for automated deployment
+- ArgoCD manifests for application deployment
+
+## Manual Deployment (Development Only)
+
+If you need to deploy manually for development/testing:
+
+### Prerequisites
+
+- AWS CLI configured with credentials
+- Terraform >= 1.0
+- kubectl
+- Configuration files from the GitOps repository
 
 ### 1. Deploy Infrastructure
 
 ```bash
 cd infrastructure
-terraform init
-terraform apply -var-file="../infrastructure.tfvars"
+terraform init -backend-config=../config/infrastructure/backend-dev.tfbackend
+terraform apply -var-file=../config/common.tfvars -var-file=../config/infrastructure.tfvars
 ```
 
 **Duration**: 15-20 minutes
@@ -18,8 +51,8 @@ terraform apply -var-file="../infrastructure.tfvars"
 
 ```bash
 cd ../tenants
-terraform init
-terraform apply -var-file="../tenants.tfvars"
+terraform init -backend-config=../config/tenants/backend-dev.tfbackend
+terraform apply -var-file=../config/common.tfvars -var-file=../config/tenants.tfvars
 ```
 
 **Duration**: 2-5 minutes
@@ -37,19 +70,15 @@ aws eks update-kubeconfig --name saas-infra-lab-dev --region us-east-1
 kubectl get nodes
 ```
 
-### 4. Deploy Applications
-
-```bash
-kubectl apply -k ../../../Sample-saas-app/k8s/namespace-platform
-kubectl apply -k ../../../Sample-saas-app/k8s/namespace-analytics
-```
-
 ## Configuration
 
-- **Infrastructure**: `infrastructure.tfvars` - Cluster, nodes, RDS settings
-- **Tenants**: `tenants.tfvars` - Namespaces and database credentials
+Configuration files are in this repository (`config/` directory):
+- **Common**: `config/common.tfvars` - Shared values (AWS, project, tags, GitHub repos)
+- **Infrastructure**: `config/infrastructure.tfvars` - Cluster, nodes, RDS settings
+- **Tenants**: `config/tenants.tfvars` - Namespaces and database credentials
+- **Backend configs**: `config/infrastructure/backend-dev.tfbackend` and `config/tenants/backend-dev.tfbackend`
 
-**Important**: Database credentials are automatically read from AWS Secrets Manager. The `db_password` in `tenants.tfvars` is used as a fallback if Secrets Manager is not available. The tenants Terraform configuration automatically retrieves the actual RDS password from AWS Secrets Manager for consistency.
+**Important**: Database credentials are automatically read from AWS Secrets Manager. The tenants Terraform configuration automatically retrieves the actual RDS password from AWS Secrets Manager for consistency.
 
 ## Multi-Tenant Setup
 
@@ -71,7 +100,13 @@ Both namespaces share the same RDS PostgreSQL database but are isolated with:
 
 ## Cleanup
 
+### Automated Cleanup
+
+Use the destroy workflow in the GitOps repository (requires confirmation).
+
+### Manual Cleanup
+
 ```bash
-cd tenants && terraform destroy -var-file="../tenants.tfvars"
-cd ../infrastructure && terraform destroy -var-file="../infrastructure.tfvars"
+cd tenants && terraform destroy -var-file="../config/common.tfvars" -var-file="../config/tenants.tfvars"
+cd ../infrastructure && terraform destroy -var-file="../config/common.tfvars" -var-file="../config/infrastructure.tfvars"
 ```

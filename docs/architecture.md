@@ -113,7 +113,7 @@ Deploys core AWS infrastructure:
 - Security groups
 - CloudWatch monitoring
 
-**Module Source**: `github.com/SaaSInfraLab/Terraform-modules//infrastructure?ref=main`
+**Configuration Location**: `cloudnative-saas-eks/examples/dev-environment/infrastructure/`
 
 ### Phase 2: Tenants
 - Tenant namespaces
@@ -124,7 +124,7 @@ Deploys core AWS infrastructure:
 - Kubernetes secrets (database credentials from AWS Secrets Manager)
 - ConfigMaps (application configuration)
 
-**Module Source**: `github.com/SaaSInfraLab/Terraform-modules//tenants?ref=main`
+**Configuration Location**: `cloudnative-saas-eks/examples/dev-environment/tenants/`
 
 ### Phase 3: Application Deployment (CI/CD)
 - Container image builds (ECR)

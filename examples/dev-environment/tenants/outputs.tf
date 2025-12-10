@@ -1,43 +1,50 @@
+# =============================================================================
+# TENANT OUTPUTS
+# =============================================================================
+# All outputs from tenant modules - single source of truth
+# =============================================================================
+
+# =============================================================================
+# TENANT INFORMATION
+# =============================================================================
+
 output "tenant_namespaces" {
-  description = "List of created tenant namespaces"
-  value       = module.tenants.tenant_namespaces
+  description = "Map of tenant names to their namespace names"
+  value       = module.multi_tenancy.tenant_namespaces
 }
 
-output "tenant_names" {
-  description = "List of tenant names"
-  value       = module.tenants.tenant_names
+output "tenant_resource_quotas" {
+  description = "Map of tenant names to their resource quota information"
+  value       = module.multi_tenancy.tenant_quotas
 }
 
-output "tenant_summary" {
-  description = "Summary of tenant configurations"
-  value       = module.tenants.tenant_summary
+output "tenant_service_accounts" {
+  description = "Map of tenant names to their service account information"
+  value       = module.multi_tenancy.tenant_service_accounts
 }
+
+output "tenant_network_policies" {
+  description = "Map of tenant names to their network policy information (if enabled)"
+  value       = module.multi_tenancy.tenant_network_policies
+}
+
+# =============================================================================
+# CLUSTER INFORMATION
+# =============================================================================
 
 output "cluster_name" {
   description = "Name of the EKS cluster"
-  value       = module.tenants.cluster_name
+  value       = local.cluster_name
 }
 
-output "cluster_endpoint" {
-  description = "Endpoint URL of the EKS cluster"
-  value       = module.tenants.cluster_endpoint
-  sensitive   = true
+output "aws_region" {
+  description = "AWS region where tenants are deployed"
+  value       = var.aws_region
 }
 
-output "kubeconfig_update_command" {
-  description = "Command to update kubeconfig for this cluster"
-  value       = module.tenants.kubeconfig_update_command
-}
-
-output "verification_commands" {
-  description = "Commands to verify multi-tenant setup"
-  value       = module.tenants.verification_commands
-}
-
-output "tenant_access_commands" {
-  description = "Commands to access each tenant namespace"
-  value       = module.tenants.tenant_access_commands
-}
+# =============================================================================
+# APPLICATION CONFIGURATION
+# =============================================================================
 
 output "configmaps_created" {
   description = "ConfigMaps created for each tenant namespace with RDS configuration"
@@ -62,4 +69,23 @@ output "secrets_created" {
     }
   }
   sensitive = true
+}
+
+# =============================================================================
+# MULTI-TENANCY FEATURES
+# =============================================================================
+
+output "rbac_enabled" {
+  description = "Whether RBAC is enabled"
+  value       = module.multi_tenancy.rbac_enabled
+}
+
+output "namespace_isolation_enabled" {
+  description = "Whether namespace isolation is enabled"
+  value       = module.multi_tenancy.namespace_isolation_enabled
+}
+
+output "service_accounts_enabled" {
+  description = "Whether service accounts for IRSA are enabled"
+  value       = module.multi_tenancy.service_accounts_enabled
 }

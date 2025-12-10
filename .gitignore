@@ -53,3 +53,13 @@ Thumbs.db
 tmp/
 temp/
 .tmp/
+
+# Terraform plan files
+*.tfplan
+tfplan
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.tgz

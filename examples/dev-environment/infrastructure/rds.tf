@@ -1,14 +1,11 @@
-# Data source to get the actual EKS cluster security group
-# This ensures we use the real cluster security group created by AWS
-# Note: This requires the EKS cluster to exist first
 data "aws_eks_cluster" "main" {
   name = local.cluster_name
   
-  depends_on = [module.infrastructure]
+  depends_on = [module.eks]
 }
 
 module "rds" {
-  source = "../../../../Terraform-modules/modules/rds"
+  source = "github.com/SaaSInfraLab/Terraform-modules//modules/rds?ref=main"
 
   name_prefix = local.cluster_name
   identifier  = "${local.cluster_name}-postgres"
@@ -27,37 +24,28 @@ module "rds" {
   username = "taskuser"
   password = var.db_password
   
-  vpc_id      = module.infrastructure.vpc_id
-  subnet_ids  = module.infrastructure.private_subnet_ids
+  vpc_id      = module.vpc.vpc_id
+  subnet_ids  = module.vpc.private_subnet_ids
   
-  # Allow access from both EKS nodes and cluster security groups
-  # The module output and data source should have the same security group ID,
-  # but we include both to ensure compatibility
   allowed_security_group_ids = [
-    module.infrastructure.nodes_security_group_id,
-    module.infrastructure.cluster_security_group_id,
-    try(data.aws_eks_cluster.main.vpc_config[0].cluster_security_group_id, module.infrastructure.cluster_security_group_id)
+    module.vpc.eks_nodes_sg_id,
+    module.eks.cluster_security_group_id,
+    try(data.aws_eks_cluster.main.vpc_config[0].cluster_security_group_id, module.eks.cluster_security_group_id)
   ]
   publicly_accessible       = false
   
-  # Minimal backup settings
-  backup_retention_period = 1  # Keep only 1 day of backups
+  backup_retention_period = 1
   backup_window          = "03:00-04:00"
   maintenance_window     = "mon:04:00-mon:05:00"
   skip_final_snapshot    = true
   
-  # Disable costly features
   performance_insights_enabled = false
   monitoring_interval         = 0
   multi_az                    = false
   
-  # Apply changes immediately (for testing/debugging)
   apply_immediately = true
-  
-  # Enable deletion protection in production
   deletion_protection = false
   
-  # Database parameters
   db_parameters = [
     {
       name  = "log_statement"
@@ -70,7 +58,7 @@ module "rds" {
   ]
   
   tags = merge(
-    var.tags,
+    var.common_tags,
     {
       Environment = var.environment
       ManagedBy   = "terraform"

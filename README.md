@@ -9,33 +9,69 @@
 
 ## 🎯 Overview
 
-This is the **main reference architecture** that orchestrates all modules to build a complete multi-tenant SaaS platform on AWS EKS. It provides a production-ready foundation with:
+This is the **single source of truth** for all infrastructure configurations. It orchestrates reusable Terraform modules to build a complete multi-tenant SaaS platform on AWS EKS. It provides a production-ready foundation with:
 
 - ✅ **Complete Infrastructure Orchestration** - Deploys VPC, EKS cluster, IAM, security, and monitoring
 - ✅ **Multi-Tenant Provisioning** - Automated tenant namespace creation with isolation and quotas
 - ✅ **Working Examples** - Complete deployment configurations ready to use
-- ✅ **Pure Terraform** - No helper scripts required, standard Terraform workflow
+- ✅ **Pure Terraform** - Standard Terraform workflow, no helper scripts required
+- ✅ **Centralized Configuration** - All configs (tfvars, backend) in one place
+- ✅ **GitOps Integration** - Automated deployment via GitHub Actions and ArgoCD
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-CloudNative-saas-eks (Configuration Repo)
-    ↓ calls
-Terraform-modules (Module Library Repo - GitHub)
-    ↓ creates
-AWS Resources (EKS, VPC, IAM, etc.)
+┌─────────────────────────────────────────────────────────┐
+│  cloudnative-saas-eks (Single Source of Truth)          │
+│  ├── Configuration Files (config/*.tfvars)               │
+│  ├── Terraform Code (examples/dev-environment/)         │
+│  └── Backend Configs (config/*/backend-dev.tfbackend)    │
+└─────────────────────────────────────────────────────────┘
+                    ↓ calls
+┌─────────────────────────────────────────────────────────┐
+│  Terraform-modules (Module Library - GitHub)             │
+│  └── Pure reusable modules only                          │
+└─────────────────────────────────────────────────────────┘
+                    ↓ creates
+┌─────────────────────────────────────────────────────────┐
+│  AWS Resources (EKS, VPC, IAM, RDS, ECR, etc.)           │
+└─────────────────────────────────────────────────────────┘
+                    ↓ managed by
+┌─────────────────────────────────────────────────────────┐
+│  Gitops-pipeline (Automation Layer)                      │
+│  └── GitHub Actions + ArgoCD                            │
+└─────────────────────────────────────────────────────────┘
 ```
+
+**Key Principles:**
+- ✅ **cloudnative-saas-eks** = Single source of truth for ALL configurations
+- ✅ **Terraform-modules** = Pure reusable modules (no configs)
+- ✅ **Gitops-pipeline** = Automation layer (watches and applies changes)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- AWS CLI (configured with credentials)
-- Terraform >= 1.0
-- kubectl >= 1.32
-- Git
+- **AWS CLI** - Configured with valid credentials (`aws sts get-caller-identity` should work)
+- **Terraform** >= 1.0
+- **kubectl** >= 1.32
+- **Git**
+- **S3 Bucket** - For Terraform state (created automatically or manually)
+
+### Verify Prerequisites
+
+```bash
+# Check AWS credentials
+aws sts get-caller-identity
+
+# Check Terraform version
+terraform version
+
+# Check kubectl
+kubectl version --client
+```
 
 ### Deployment
 
@@ -46,25 +82,82 @@ cd cloudnative-saas-eks
 
 # Phase 1: Deploy Infrastructure
 cd examples/dev-environment/infrastructure
-terraform init -backend-config=backend-dev.tfbackend
-terraform plan -var-file="../infrastructure.tfvars"
-terraform apply -var-file="../infrastructure.tfvars"
+terraform init -backend-config=../config/infrastructure/backend-dev.tfbackend
+terraform plan -var-file=../config/common.tfvars -var-file=../config/infrastructure.tfvars
+terraform apply -var-file=../config/common.tfvars -var-file=../config/infrastructure.tfvars
 
 # Phase 2: Deploy Tenants
 cd ../tenants
-terraform init -backend-config=backend-dev.tfbackend
-terraform plan -var-file="../tenants.tfvars"
-terraform apply -var-file="../tenants.tfvars"
+terraform init -backend-config=../config/tenants/backend-dev.tfbackend
+terraform plan -var-file=../config/common.tfvars -var-file=../config/tenants.tfvars
+terraform apply -var-file=../config/common.tfvars -var-file=../config/tenants.tfvars
 
 # Verify deployment
-aws eks update-kubeconfig --name <cluster-name> --region <region>
+CLUSTER_NAME=$(terraform output -raw cluster_name)
+REGION=$(terraform output -raw aws_region)
+aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION
 kubectl get nodes
 kubectl get namespaces
 ```
 
 **Expected Duration**: Infrastructure: 15-20 minutes | Tenants: 2-5 minutes
 
+### First-Time Setup
+
+Before deploying, ensure you have an S3 bucket for Terraform state:
+
+```bash
+# Create S3 bucket for state (if it doesn't exist)
+aws s3 mb s3://saas-infra-lab-terraform-state --region us-east-1
+aws s3api put-bucket-versioning \
+  --bucket saas-infra-lab-terraform-state \
+  --versioning-configuration Status=Enabled
+
+# Create DynamoDB table for state locking (if it doesn't exist)
+aws dynamodb create-table \
+  --table-name terraform-state-lock \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+```
+
 For detailed instructions, see [examples/dev-environment/README.md](examples/dev-environment/README.md).
+
+## 📁 Repository Structure
+
+```
+cloudnative-saas-eks/
+├── examples/
+│   └── dev-environment/          # Development environment configuration
+│       ├── config/                # ⭐ ALL CONFIGURATION FILES (Single Source of Truth)
+│       │   ├── common.tfvars      # Shared values (AWS, project, tags, GitHub repos)
+│       │   ├── infrastructure.tfvars
+│       │   ├── tenants.tfvars
+│       │   ├── infrastructure/
+│       │   │   └── backend-dev.tfbackend
+│       │   └── tenants/
+│       │       └── backend-dev.tfbackend
+│       ├── infrastructure/       # Infrastructure Terraform code
+│       │   ├── main.tf            # Calls modules from Terraform-modules repo
+│       │   ├── variables.tf
+│       │   ├── outputs.tf
+│       │   └── rds.tf
+│       ├── tenants/               # Tenants Terraform code
+│       │   ├── main.tf
+│       │   ├── variables.tf
+│       │   └── outputs.tf
+│       └── README.md              # Detailed deployment guide
+└── docs/                          # Additional documentation
+    ├── architecture.md
+    ├── deployment-guide.md
+    └── troubleshooting.md
+```
+
+**Key Points:**
+- All configuration files are in `examples/dev-environment/config/`
+- Terraform code calls modules from `github.com/SaaSInfraLab/Terraform-modules`
+- Backend configs point to S3 for remote state
 
 ## 📖 Documentation
 
@@ -115,12 +208,12 @@ tenants = [
     enable_network_policy = true
   },
   {
-    name               = "data-team"
-    namespace          = "data"
-    cpu_limit          = "10"
-    memory_limit       = "20Gi"
-    pod_limit          = 150
-    storage_limit      = "100Gi"
+    name               = "analytics"
+    namespace          = "analytics"
+    cpu_limit          = "15"
+    memory_limit       = "30Gi"
+    pod_limit          = 180
+    storage_limit      = "150Gi"
     enable_network_policy = true
   }
 ]
@@ -156,24 +249,36 @@ kubectl get quota -n analytics
 
 ## 🔧 Configuration
 
-### Infrastructure Variables
+**All configuration files are located in `examples/dev-environment/config/` directory:**
 
-Edit `examples/dev-environment/infrastructure.tfvars` to customize:
-- Cluster version
+### Configuration Files
+
+- **`config/common.tfvars`** - Shared values (AWS region, project name, common tags, GitHub repo names)
+- **`config/infrastructure.tfvars`** - Infrastructure settings (cluster version, node types, VPC CIDR, monitoring)
+- **`config/tenants.tfvars`** - Tenant configuration (namespaces, resource quotas, network policies)
+- **`config/infrastructure/backend-dev.tfbackend`** - Terraform state backend for infrastructure
+- **`config/tenants/backend-dev.tfbackend`** - Terraform state backend for tenants
+
+### Customization
+
+**Infrastructure Variables** (`config/infrastructure.tfvars`):
+- Cluster version and Kubernetes settings
 - Node instance types and sizes
-- VPC CIDR block
-- Monitoring settings
+- VPC CIDR block and availability zones
+- Monitoring and logging settings
 - Cluster access configuration
 
-### Tenant Configuration
-
-Edit `examples/dev-environment/tenants.tfvars` to customize:
+**Tenant Configuration** (`config/tenants.tfvars`):
 - Tenant names and namespaces
-- Resource quotas (CPU, memory, storage)
+- Resource quotas (CPU, memory, storage, pods)
 - Network policy settings
 - Number of tenants
 
 **Database Credentials**: The tenants Terraform automatically reads database credentials from AWS Secrets Manager (created during infrastructure deployment). The `db_password` in `tenants.tfvars` is only used as a fallback, ensuring consistency between RDS and Kubernetes secrets.
+
+### Automated Deployment
+
+Changes to configuration files in this repository are automatically deployed via the [Gitops-pipeline](https://github.com/SaaSInfraLab/Gitops-pipeline) repository, which watches for changes and applies them using GitHub Actions.
 
 ---
 
@@ -255,8 +360,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 This is part of the **SaaSInfraLab** ecosystem:
 
-- **Terraform Modules** - Reusable infrastructure modules ([Terraform-modules](https://github.com/SaaSInfraLab/Terraform-modules))
-- **This Repository** - Complete orchestration and examples
+- **[Terraform-modules](https://github.com/SaaSInfraLab/Terraform-modules)** - Pure reusable infrastructure modules (no configs)
+- **[Gitops-pipeline](https://github.com/SaaSInfraLab/Gitops-pipeline)** - Automation layer (GitHub Actions + ArgoCD)
+- **[Sample-Saas-App](https://github.com/SaaSInfraLab/Sample-Saas-App)** - Sample application deployed to the platform
+- **This Repository** - Single source of truth for all configurations
 
 ---
 

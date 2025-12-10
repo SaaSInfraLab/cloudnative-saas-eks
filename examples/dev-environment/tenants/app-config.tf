@@ -1,10 +1,18 @@
+# Get AWS account ID and region from variables
+data "aws_caller_identity" "current" {}
+
+locals {
+  aws_account_id = coalesce(var.aws_account_id, data.aws_caller_identity.current.account_id)
+  state_bucket   = coalesce(var.terraform_state_bucket, "${var.project_name}-terraform-state")
+}
+
 data "terraform_remote_state" "infrastructure" {
   backend = "s3"
   
   config = {
-    bucket = "saas-infra-lab-terraform-state"
-    key    = "saas-infra-lab/dev/infrastructure/terraform.tfstate"
-    region = "us-east-1"
+    bucket = local.state_bucket
+    key    = "${var.project_name}/${var.environment}/infrastructure/terraform.tfstate"
+    region = var.aws_region
   }
 }
 
@@ -27,9 +35,12 @@ data "aws_secretsmanager_secret_version" "rds_credentials" {
 }
 
 locals {
-  # Use password from Secrets Manager if available, otherwise fall back to variable
-  db_password_from_secret = try(jsondecode(data.aws_secretsmanager_secret_version.rds_credentials[0].secret_string).password, var.db_password)
+  # Use password from Secrets Manager only - no fallback to variable
+  db_password_from_secret = try(jsondecode(data.aws_secretsmanager_secret_version.rds_credentials[0].secret_string).password, "")
   db_user_from_secret     = try(jsondecode(data.aws_secretsmanager_secret_version.rds_credentials[0].secret_string).username, var.db_user)
+  
+  # Validate that we have credentials from Secrets Manager
+  has_db_credentials = local.rds_secret_arn != "" && local.db_password_from_secret != ""
 }
 
 data "aws_eks_cluster" "current" {
@@ -74,7 +85,7 @@ resource "kubernetes_config_map" "backend_config" {
     metrics-enabled = var.metrics_enabled
   }
 
-  depends_on = [module.tenants]
+  depends_on = [module.multi_tenancy]
 }
 
 resource "kubernetes_secret" "postgresql_secret" {
@@ -89,18 +100,12 @@ resource "kubernetes_secret" "postgresql_secret" {
       managed = "terraform"
     }
     annotations = {
-      # Force secret update when values change by including a hash of the actual values
-      # This ensures Terraform detects changes even if the secret exists with wrong encoding
       "secret-version" = md5("${local.db_user_from_secret}:${local.db_password_from_secret}")
     }
   }
 
   type = "Opaque"
   
-  # The data field expects base64-encoded strings
-  # We encode the plain text values once here
-  # Kubernetes will decode them once when pods read the secret
-  # This results in single encoding (correct behavior)
   data = {
     db-user     = base64encode(local.db_user_from_secret)
     db-password = base64encode(local.db_password_from_secret)
@@ -108,11 +113,9 @@ resource "kubernetes_secret" "postgresql_secret" {
 
   lifecycle {
     create_before_destroy = true
-    # The annotation hash ensures Terraform detects when secret values change
-    # This allows automatic updates even if secrets were manually modified
   }
 
-  depends_on = [module.tenants]
+  depends_on = [module.multi_tenancy]
 }
 
 resource "kubernetes_secret" "backend_secret" {
@@ -130,12 +133,9 @@ resource "kubernetes_secret" "backend_secret" {
 
   type = "Opaque"
 
-  # The data field expects base64-encoded strings
-  # We encode the plain text values once here
-  # Kubernetes will decode them once when pods read the secret
   data = {
-    jwt-secret = base64encode(var.jwt_secret)
+    jwt-secret = base64encode("PLACEHOLDER_UPDATE_FROM_SECRETS_MANAGER")
   }
 
-  depends_on = [module.tenants]
+  depends_on = [module.multi_tenancy]
 }

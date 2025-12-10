@@ -1,6 +1,8 @@
 terraform {
   required_version = ">= 1.0"
   
+  backend "s3" {}
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -12,3 +14,5 @@ terraform {
     }
   }
 }
+
+# Note: Providers are defined in app-config.tf to avoid duplication
