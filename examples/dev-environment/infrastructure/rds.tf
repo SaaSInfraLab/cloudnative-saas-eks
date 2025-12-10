@@ -1,9 +1,3 @@
-data "aws_eks_cluster" "main" {
-  name = local.cluster_name
-  
-  depends_on = [module.eks]
-}
-
 module "rds" {
   source = "github.com/SaaSInfraLab/Terraform-modules//modules/rds?ref=main"
 
@@ -29,8 +23,7 @@ module "rds" {
   
   allowed_security_group_ids = [
     module.vpc.eks_nodes_sg_id,
-    module.eks.cluster_security_group_id,
-    try(data.aws_eks_cluster.main.vpc_config[0].cluster_security_group_id, module.eks.cluster_security_group_id)
+    module.eks.cluster_security_group_id
   ]
   publicly_accessible       = false
   
