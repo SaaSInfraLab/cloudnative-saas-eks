@@ -224,6 +224,8 @@ variable "auto_include_executor" {
   default     = true
 }
 
+# db_password variable removed - password is now managed by AWS Secrets Manager
+# Use module.rds.rds_secret_arn output to retrieve credentials from Secrets Manager
 variable "db_password" {
   description = "Password for RDS PostgreSQL database"
   type        = string
