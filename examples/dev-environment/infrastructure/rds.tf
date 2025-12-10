@@ -17,6 +17,7 @@ module "rds" {
   db_name  = "taskdb"
   username = "taskuser"
   password = var.db_password
+  create_random_password = false  # Use provided password instead of random
   
   vpc_id      = module.vpc.vpc_id
   subnet_ids  = module.vpc.private_subnet_ids
