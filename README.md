@@ -5,7 +5,7 @@
 ![Kubernetes](https://img.shields.io/badge/Platform-Kubernetes-326CE5?style=for-the-badge&logo=kubernetes)
 ![Multi-Tenant](https://img.shields.io/badge/Architecture-Multi--Tenant-success?style=for-the-badge)
 
-> **🌟 FLAGSHIP PROJECT** - Production-ready, multi-tenant SaaS infrastructure on AWS EKS. Complete solution with infrastructure orchestration, multi-tenant provisioning, and working examples.
+> **🌟 FLAGSHIP PROJECT** - Production-ready, multi-tenant SaaS infrastructure on AWS EKS. Complete solution with infrastructure orchestration, multi-tenant provisioning, and working examples. 
 
 ## 🎯 Overview
 
