@@ -5,13 +5,8 @@ on:
     paths:
       - '**/*.tf'
       - '**/*.tfvars.example'
-  push:
-    branches:
-      - main
-      - testing
-    paths:
-      - '**/*.tf'
-      - '**/*.tfvars.example'
+    paths-ignore:
+      - 'examples/dev-environment/config/**'  # Config files trigger deployment, not validation
 
 jobs:
   validate-terraform:

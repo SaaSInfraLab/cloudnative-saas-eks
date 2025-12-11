@@ -17,7 +17,7 @@ This is the **single source of truth** for all infrastructure configurations. It
 - ✅ **Pure Terraform** - Standard Terraform workflow, no helper scripts required
 - ✅ **Centralized Configuration** - All configs (tfvars, backend) in one place
 - ✅ **GitOps Integration** - Automated deployment via GitHub Actions and ArgoCD
-- ✅ **CI/CD Pipeline** - Automatically triggers infrastructure deployment on config changes
+- ✅ **CI/CD Pipeline** - Validates code and triggers automated deployment on config changes
 
 ---
 
@@ -41,7 +41,7 @@ This is the **single source of truth** for all infrastructure configurations. It
 └─────────────────────────────────────────────────────────┘
                     ↓ managed by
 ┌─────────────────────────────────────────────────────────┐
-│  Gitops-pipeline (Automation Layer)                      │
+│  Gitops-pipeline (Automation Layer)                     │
 │  └── GitHub Actions + ArgoCD                            │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -287,6 +287,7 @@ Changes to configuration files in this repository automatically trigger deployme
 3. CI/CD workflow (`.github/workflows/trigger-infrastructure-deployment.yml`) validates Terraform code
 4. Workflow triggers Gitops-pipeline via `repository_dispatch` event
 5. Gitops-pipeline clones this repo and applies changes using Terraform
+6. Gitops-pipeline handles errors automatically (e.g., duplicate security group rules)
 
 **Setup Required:**
 - Add `GITOPS_TRIGGER_TOKEN` secret to this repository
@@ -298,7 +299,7 @@ Changes to configuration files in this repository automatically trigger deployme
 **Testing:**
 - Push to `testing` branch to test the workflow
 - Workflow validates Terraform and triggers deployment
-- Check status: **Actions** tab in this repository
+- Check status: **Actions** tab in this repository or Gitops-pipeline repository
 
 ---
 

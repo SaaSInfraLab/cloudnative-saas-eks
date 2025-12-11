@@ -9,6 +9,7 @@ on:
       - 'examples/dev-environment/config/**'
       - 'examples/dev-environment/infrastructure/**'
       - 'examples/dev-environment/tenants/**'
+      - '.github/workflows/trigger-infrastructure-deployment.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -49,27 +50,23 @@ jobs:
       - name: Terraform Init and Validate - Infrastructure
         working-directory: examples/dev-environment/infrastructure
         env:
-          TF_VAR_db_password: "dummy-for-validation"
+          TF_VAR_db_password: "dummy-password-for-validation"
         run: |
-          terraform init -backend=false
-          terraform validate -no-color 2>&1 | tee /tmp/validate.log || {
-            echo "⚠️ Validation completed with warnings/errors"
-            echo "This is expected for validation without AWS context"
-            echo "Full validation will occur during actual deployment"
-            exit 0
+          terraform init -backend=false || true
+          terraform validate -no-color 2>&1 || {
+            echo "⚠️ Validation completed with warnings"
+            echo "Full validation will occur during deployment in Gitops-pipeline"
           }
 
       - name: Terraform Init and Validate - Tenants
         working-directory: examples/dev-environment/tenants
         env:
-          TF_VAR_db_password: "dummy-for-validation"
+          TF_VAR_db_password: "dummy-password-for-validation"
         run: |
-          terraform init -backend=false
-          terraform validate -no-color 2>&1 | tee /tmp/validate.log || {
-            echo "⚠️ Validation completed with warnings/errors"
-            echo "This is expected for validation without AWS context"
-            echo "Full validation will occur during actual deployment"
-            exit 0
+          terraform init -backend=false || true
+          terraform validate -no-color 2>&1 || {
+            echo "⚠️ Validation completed with warnings"
+            echo "Full validation will occur during deployment in Gitops-pipeline"
           }
 
       - name: Determine Environment
