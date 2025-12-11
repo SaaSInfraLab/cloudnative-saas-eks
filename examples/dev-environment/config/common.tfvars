@@ -43,9 +43,9 @@ common_tags = {
 # GITHUB REPOSITORY CONFIGURATION
 # =============================================================================
 # These are set to defaults, but can be overridden if needed
-github_org              = "SaaSInfraLab"
-terraform_modules_repo  = "Terraform-modules"
-gitops_repo             = "Gitops-pipeline"
-sample_app_repo         = "Sample-Saas-App"
-monitoring_stack_repo   = "Monitoring-stack"
+github_org             = "SaaSInfraLab"
+terraform_modules_repo = "Terraform-modules"
+gitops_repo            = "Gitops-pipeline"
+sample_app_repo        = "Sample-Saas-App"
+monitoring_stack_repo  = "Monitoring-stack"
 

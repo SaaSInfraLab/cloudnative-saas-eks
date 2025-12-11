@@ -26,9 +26,9 @@ cluster_endpoint_public_access  = true
 # =============================================================================
 # m7i-flex.large: Free tier eligible, 1 vCPU, 8GB RAM, ~29 pods/node (BEST for EKS!)
 node_instance_types = ["m7i-flex.large"]
-node_desired_size   = 2  # 2 nodes with m7i-flex.large (free tier eligible, much better capacity)
+node_desired_size   = 2 # 2 nodes with m7i-flex.large (free tier eligible, much better capacity)
 node_min_size       = 1
-node_max_size       = 2  # 2 nodes should provide plenty of capacity
+node_max_size       = 2 # 2 nodes should provide plenty of capacity
 node_disk_size      = 20
 
 # =============================================================================
@@ -44,8 +44,8 @@ spot_max_size         = 2
 # MONITORING CONFIGURATION
 # =============================================================================
 enable_container_insights = false
-enable_flow_logs         = false
-log_retention_days       = 7
+enable_flow_logs          = false
+log_retention_days        = 7
 
 # =============================================================================
 # EKS ACCESS CONFIGURATION

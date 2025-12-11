@@ -8,7 +8,7 @@ locals {
 
 data "terraform_remote_state" "infrastructure" {
   backend = "s3"
-  
+
   config = {
     bucket = local.state_bucket
     key    = "${var.project_name}/${var.environment}/infrastructure/terraform.tfstate"
@@ -17,9 +17,9 @@ data "terraform_remote_state" "infrastructure" {
 }
 
 locals {
-  rds_address = try(data.terraform_remote_state.infrastructure.outputs.rds_address, "")
-  rds_port    = try(data.terraform_remote_state.infrastructure.outputs.rds_port, "5432")
-  rds_db_name = try(data.terraform_remote_state.infrastructure.outputs.rds_database_name, "taskdb")
+  rds_address    = try(data.terraform_remote_state.infrastructure.outputs.rds_address, "")
+  rds_port       = try(data.terraform_remote_state.infrastructure.outputs.rds_port, "5432")
+  rds_db_name    = try(data.terraform_remote_state.infrastructure.outputs.rds_database_name, "taskdb")
   rds_secret_arn = try(data.terraform_remote_state.infrastructure.outputs.rds_secret_arn, "")
 }
 
@@ -38,7 +38,7 @@ locals {
   # Use password from Secrets Manager only - no fallback to variable
   db_password_from_secret = try(jsondecode(data.aws_secretsmanager_secret_version.rds_credentials[0].secret_string).password, "")
   db_user_from_secret     = try(jsondecode(data.aws_secretsmanager_secret_version.rds_credentials[0].secret_string).username, var.db_user)
-  
+
   # Validate that we have credentials from Secrets Manager
   has_db_credentials = local.rds_secret_arn != "" && local.db_password_from_secret != ""
 }
@@ -76,12 +76,12 @@ resource "kubernetes_config_map" "backend_config" {
   }
 
   data = {
-    db-host        = local.rds_address
-    db-port        = local.rds_port
-    db-name        = local.rds_db_name
-    db-pool-min    = var.db_pool_min
-    db-pool-max    = var.db_pool_max
-    jwt-expires-in = var.jwt_expires_in
+    db-host         = local.rds_address
+    db-port         = local.rds_port
+    db-name         = local.rds_db_name
+    db-pool-min     = var.db_pool_min
+    db-pool-max     = var.db_pool_max
+    jwt-expires-in  = var.jwt_expires_in
     metrics-enabled = var.metrics_enabled
   }
 
@@ -105,7 +105,7 @@ resource "kubernetes_secret" "postgresql_secret" {
   }
 
   type = "Opaque"
-  
+
   data = {
     db-user     = base64encode(local.db_user_from_secret)
     db-password = base64encode(local.db_password_from_secret)

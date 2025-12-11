@@ -15,11 +15,11 @@
 output "project_config" {
   description = "Complete project configuration - single source of truth"
   value = {
-    project_name    = var.project_name
-    environment     = var.environment
-    aws_account_id  = local.aws_account_id
-    aws_region      = var.aws_region
-    cluster_name    = local.cluster_name
+    project_name   = var.project_name
+    environment    = var.environment
+    aws_account_id = local.aws_account_id
+    aws_region     = var.aws_region
+    cluster_name   = local.cluster_name
   }
 }
 
@@ -30,13 +30,13 @@ output "project_config" {
 output "service_names" {
   description = "All service and resource names - single source of truth"
   value = {
-    cluster_name              = local.cluster_name
-    vpc_name                  = "${local.cluster_name}-vpc"
-    rds_instance_name         = "${local.cluster_name}-postgres"
-    ecr_backend_repo_name     = "${var.project_name}-${var.environment}-backend"
-    ecr_frontend_repo_name    = "${var.project_name}-${var.environment}-frontend"
-    terraform_state_bucket    = local.state_bucket
-    dynamodb_lock_table       = "${var.project_name}-terraform-state-lock"
+    cluster_name           = local.cluster_name
+    vpc_name               = "${local.cluster_name}-vpc"
+    rds_instance_name      = "${local.cluster_name}-postgres"
+    ecr_backend_repo_name  = "${var.project_name}-${var.environment}-backend"
+    ecr_frontend_repo_name = "${var.project_name}-${var.environment}-frontend"
+    terraform_state_bucket = local.state_bucket
+    dynamodb_lock_table    = "${var.project_name}-terraform-state-lock"
   }
 }
 
@@ -47,10 +47,10 @@ output "service_names" {
 output "ecr_config" {
   description = "ECR repository configuration"
   value = {
-    registry_url            = "${local.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
-    backend_repository_url  = "${local.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.project_name}-${var.environment}-backend"
-    frontend_repository_url = "${local.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.project_name}-${var.environment}-frontend"
-    backend_repository_name = "${var.project_name}-${var.environment}-backend"
+    registry_url             = "${local.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+    backend_repository_url   = "${local.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.project_name}-${var.environment}-backend"
+    frontend_repository_url  = "${local.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.project_name}-${var.environment}-frontend"
+    backend_repository_name  = "${var.project_name}-${var.environment}-backend"
     frontend_repository_name = "${var.project_name}-${var.environment}-frontend"
   }
 }
@@ -62,11 +62,11 @@ output "ecr_config" {
 output "github_config" {
   description = "GitHub repository URLs - single source of truth"
   value = {
-    github_org              = var.github_org
-    terraform_modules_url   = local.terraform_modules_url
-    gitops_repo_url         = local.gitops_repo_url
-    sample_app_repo_url     = local.sample_app_repo_url
-    monitoring_stack_url    = local.monitoring_stack_url
+    github_org               = var.github_org
+    terraform_modules_url    = local.terraform_modules_url
+    gitops_repo_url          = local.gitops_repo_url
+    sample_app_repo_url      = local.sample_app_repo_url
+    monitoring_stack_url     = local.monitoring_stack_url
     cloudnative_saas_eks_url = "https://github.com/${var.github_org}/cloudnative-saas-eks"
   }
 }
@@ -135,11 +135,11 @@ output "complete_config" {
       rds_instance      = "${local.cluster_name}-postgres"
     }
     github = {
-      org                = var.github_org
+      org               = var.github_org
       terraform_modules = local.terraform_modules_url
-      gitops_repo        = local.gitops_repo_url
-      sample_app         = local.sample_app_repo_url
-      monitoring_stack   = local.monitoring_stack_url
+      gitops_repo       = local.gitops_repo_url
+      sample_app        = local.sample_app_repo_url
+      monitoring_stack  = local.monitoring_stack_url
     }
     tags = merge(
       var.common_tags,
