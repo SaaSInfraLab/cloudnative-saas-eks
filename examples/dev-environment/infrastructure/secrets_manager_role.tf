@@ -1,5 +1,6 @@
 # Secrets Manager IAM Role for IRSA
 # Created separately after EKS to avoid circular dependency
+# This will be created after EKS and RDS are deployed
 
 module "secrets_manager_iam" {
   source = "github.com/SaaSInfraLab/Terraform-modules//modules/iam?ref=testing"
@@ -16,6 +17,7 @@ module "secrets_manager_iam" {
   aws_region   = var.aws_region
 
   # Secrets Manager role configuration
+  # These references require EKS and RDS to be created first
   oidc_provider_arn                 = module.eks.oidc_provider_arn
   oidc_provider_url                 = module.eks.oidc_provider_url
   secrets_manager_namespace         = "platform"
