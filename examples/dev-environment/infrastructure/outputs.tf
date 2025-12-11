@@ -95,12 +95,12 @@ output "eks_viewer_role_arn" {
 
 output "secrets_manager_role_arn" {
   description = "ARN of the Secrets Manager IAM role for IRSA"
-  value       = module.iam.secrets_manager_role_arn
+  value       = module.secrets_manager_iam.secrets_manager_role_arn
 }
 
 output "secrets_manager_role_name" {
   description = "Name of the Secrets Manager IAM role for IRSA"
-  value       = module.iam.secrets_manager_role_name
+  value       = module.secrets_manager_iam.secrets_manager_role_name
 }
 
 # =============================================================================

@@ -42,7 +42,7 @@ module "iam" {
   create_vpc_flow_logs_role    = true
   create_cloudwatch_agent_role = true
   create_eks_access_roles      = var.create_eks_access_roles
-  create_secrets_manager_role  = true
+  create_secrets_manager_role  = false  # Created separately after EKS to avoid circular dependency
 
   name_prefix  = local.cluster_name
   cluster_name = local.cluster_name
@@ -52,18 +52,7 @@ module "iam" {
   eks_developer_trusted_principals = var.eks_developer_principals
   eks_viewer_trusted_principals    = var.eks_viewer_principals
 
-  # Secrets Manager role configuration
-  # Note: secret_arns will be updated after RDS is created via separate apply or script
-  oidc_provider_arn                 = module.eks.oidc_provider_arn
-  oidc_provider_url                 = module.eks.oidc_provider_url
-  secrets_manager_namespace         = "platform"
-  secrets_manager_service_account   = "backend-sa"
-  secrets_manager_secret_arns      = [] # Will be updated after RDS deployment
-  secrets_manager_kms_key_arns      = [] # Use AWS managed key
-
   tags = local.common_tags
-
-  depends_on = [module.eks]
 }
 
 # =============================================================================
