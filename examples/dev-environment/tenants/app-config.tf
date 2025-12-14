@@ -106,9 +106,9 @@ resource "kubernetes_secret" "postgresql_secret" {
 
   type = "Opaque"
 
-  string_data = {
-    db-user     = local.db_user_from_secret
-    db-password = local.db_password_from_secret
+  data = {
+    db-user     = base64encode(nonsensitive(local.db_user_from_secret))
+    db-password = base64encode(nonsensitive(local.db_password_from_secret))
   }
 
   lifecycle {
