@@ -106,7 +106,7 @@ resource "kubernetes_secret" "postgresql_secret" {
 
   type = "Opaque"
 
-  data = {
+  string_data = {
     db-user     = local.db_user_from_secret
     db-password = local.db_password_from_secret
   }
