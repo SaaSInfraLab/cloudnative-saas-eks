@@ -100,7 +100,7 @@ resource "kubernetes_secret" "postgresql_secret" {
       managed = "terraform"
     }
     annotations = {
-      "secret-version" = md5("${local.db_user_from_secret}:${local.db_password_from_secret}")
+      "secret-version" = md5("${nonsensitive(local.db_user_from_secret)}:${nonsensitive(local.db_password_from_secret)}")
     }
   }
 
